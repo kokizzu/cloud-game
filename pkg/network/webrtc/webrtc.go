@@ -48,7 +48,7 @@ func New(log *logger.Logger, api *ApiFactory) *Peer {
 	return &Peer{api: api, log: custom}
 }
 
-func (p *Peer) NewConnection(vCodec, aCodec string, signaller func(ice *string)) (err error) {
+func (p *Peer) NewConnection(vCodec string, signaller func(ice *string)) (err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("couldn't create webrtc seesion: %w", err)
@@ -96,6 +96,7 @@ func (p *Peer) NewConnection(vCodec, aCodec string, signaller func(ice *string))
 
 	p.c.OnDataChannel(func(ch *webrtc.DataChannel) { p.log.Debug().Msgf("rtc [chan] [%s] remote", ch.Label()) })
 
+	aCodec := "opus"
 	if err = p.InitMedia(vCodec, aCodec); err != nil {
 		return
 	}

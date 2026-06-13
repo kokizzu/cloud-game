@@ -36,12 +36,9 @@ func (c *coordinator) HandleInitWebrtcStream(rq api.InitWebrtcStreamRequest, w *
 	}()
 
 	peer := webrtc.New(c.log, factory)
+	codec := w.conf.Encoder.Video.Codec
 
-	if err = peer.NewConnection(
-		w.conf.Encoder.Video.Codec,
-		"opus",
-		func(ice *string) { c.IceCandidate(*ice, rq.Id) },
-	); err != nil {
+	if err = peer.NewConnection(codec, func(ice *string) { c.IceCandidate(*ice, rq.Id) }); err != nil {
 		return api.EmptyPacket
 	}
 
