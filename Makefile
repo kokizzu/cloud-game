@@ -33,6 +33,13 @@ build.worker:
 		-ldflags "-w -s -X 'main.Version=$(GIT_VERSION)'" $(EXT_WFLAGS) \
 		-o bin/ ./cmd/worker
 
+build.worker-nopgo:
+	mkdir -p bin/
+	CGO_CFLAGS=${CGO_CFLAGS} CGO_LDFLAGS=${CGO_LDFLAGS} \
+		go build $(TRIMPATH) -buildmode=exe $(if $(GO_TAGS),-tags $(GO_TAGS),) \
+		-ldflags "-w -s -X 'main.Version=$(GIT_VERSION)'" $(EXT_WFLAGS) \
+		-o bin/ ./cmd/worker
+
 build: build.coordinator build.worker
 
 test:
