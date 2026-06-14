@@ -55,7 +55,7 @@ RUN apt-get -q update && apt-get -q install --no-install-recommends -y \
     && rm -rf /var/lib/apt/lists/* /var/log/* /usr/share/bug /usr/share/doc /usr/share/doc-base \
     /usr/share/X11/locale/*
 
-COPY --from=build_worker /usr/local/share/cloud-game /cloud-game
+COPY --from=build_worker /usr/local/share/cloud-game /usr/local/share/cloud-game
 COPY --from=build_worker /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ADD https://github.com/sergystepanov/mesa-llvmpipe/releases/download/v1.0.0/libGL.so.1.5.0 \
@@ -63,3 +63,4 @@ ADD https://github.com/sergystepanov/mesa-llvmpipe/releases/download/v1.0.0/libG
 RUN cd /usr/lib/x86_64-linux-gnu && ln -s libGL.so.1.5.0 libGL.so.1 && ln -s libGL.so.1 libGL.so
 
 WORKDIR /usr/local/share/cloud-game
+CMD ["./worker"]
