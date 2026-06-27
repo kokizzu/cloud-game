@@ -24,7 +24,7 @@ type Emulator interface {
 	SetDataCb(func([]byte))
 	LoadCore(name string)
 	LoadGame(path string) error
-	FPS() int
+	FPS() float64
 	Flipped() bool
 	Rotation() uint
 	PixFormat() uint32
@@ -309,7 +309,7 @@ func (f *Frontend) Start() {
 	// The main loop of Libretro
 
 	// calculate the exact duration required for a frame (e.g., 16.666ms = 60 FPS)
-	targetFrameTime := time.Second / time.Duration(f.nano.VideoFramerate())
+	targetFrameTime := time.Duration(float64(time.Second) / f.nano.VideoFramerate())
 
 	// stop sleeping and start spinning in the remaining 1ms
 	const spinThreshold = 1 * time.Millisecond
@@ -380,7 +380,7 @@ func (f *Frontend) LoadGame(path string) error {
 
 func (f *Frontend) AspectRatio() float32          { return f.nano.AspectRatio() }
 func (f *Frontend) AudioSampleRate() int          { return f.nano.AudioSampleRate() }
-func (f *Frontend) FPS() int                      { return f.nano.VideoFramerate() }
+func (f *Frontend) FPS() float64                  { return f.nano.VideoFramerate() }
 func (f *Frontend) Flipped() bool                 { return f.nano.IsGL() }
 func (f *Frontend) FrameSize() (int, int)         { return f.nano.BaseWidth(), f.nano.BaseHeight() }
 func (f *Frontend) HasSave() bool                 { return os.Exists(f.HashPath()) }

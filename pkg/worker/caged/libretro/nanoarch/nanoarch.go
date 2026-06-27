@@ -147,7 +147,7 @@ func NewNano(localPath string) *Nanoarch {
 
 func (n *Nanoarch) AspectRatio() float32             { return float32(n.sys.av.geometry.aspect_ratio) }
 func (n *Nanoarch) AudioSampleRate() int             { return int(n.sys.av.timing.sample_rate) }
-func (n *Nanoarch) VideoFramerate() int              { return int(n.sys.av.timing.fps) }
+func (n *Nanoarch) VideoFramerate() float64          { return float64(n.sys.av.timing.fps) }
 func (n *Nanoarch) IsPortrait() bool                 { return 90 == n.Rot%180 }
 func (n *Nanoarch) KbMouseSupport() bool             { return n.meta.KbMouseSupport }
 func (n *Nanoarch) BaseWidth() int                   { return int(n.sys.av.geometry.base_width) }
