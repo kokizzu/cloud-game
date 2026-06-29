@@ -68,7 +68,7 @@ type Nanoarch struct {
 	}
 	vfr                      bool
 	Aspect                   bool
-	sdlCtx                   *graphics.SDL
+	glCtx                    *graphics.RGFW
 	hackSkipHwContextDestroy bool
 	hackSkipSameThreadSave   bool
 	limiter                  func(func())
@@ -373,7 +373,7 @@ func (n *Nanoarch) Shutdown() {
 			thread.Main(func() {
 				// running inside a go routine, lock the thread to make sure the OpenGL context stays current
 				runtime.LockOSThread()
-				if err := n.sdlCtx.BindContext(); err != nil {
+				if err := n.glCtx.BindContext(); err != nil {
 					n.log.Error().Err(err).Msg("ctx switch fail")
 				}
 			})
@@ -421,7 +421,7 @@ func (n *Nanoarch) Run() {
 	} else {
 		if n.Video.gl.enabled {
 			runtime.LockOSThread()
-			if err := n.sdlCtx.BindContext(); err != nil {
+			if err := n.glCtx.BindContext(); err != nil {
 				n.log.Error().Err(err).Msg("ctx bind fail")
 			}
 		}
@@ -432,7 +432,7 @@ func (n *Nanoarch) Run() {
 	}
 }
 
-func (n *Nanoarch) IsSupported() error                  { return graphics.TryInit() }
+func (n *Nanoarch) IsSupported() error                  { return graphics.RGFWTryInit() }
 func (n *Nanoarch) IsGL() bool                          { return n.Video.gl.enabled }
 func (n *Nanoarch) IsStopped() bool                     { return n.Stopped.Load() }
 func (n *Nanoarch) InputRetropad(port int, data []byte) { n.retropad.SetInput(port, data) }
@@ -744,7 +744,7 @@ func coreGetCurrentFramebuffer() C.uintptr_t { return (C.uintptr_t)(graphics.GlF
 
 //export coreGetProcAddress
 func coreGetProcAddress(sym *C.char) C.retro_proc_address_t {
-	return (C.retro_proc_address_t)(graphics.GlProcAddress(C.GoString(sym)))
+	return (C.retro_proc_address_t)(graphics.RGFWGlProcAddress(C.GoString(sym)))
 }
 
 //export coreEnvironment
@@ -903,7 +903,7 @@ func initVideo() {
 
 	thread.Main(func() {
 		var err error
-		Nan0.sdlCtx, err = graphics.NewSDLContext(graphics.Config{
+		Nan0.glCtx, err = graphics.NewRGFWContext(graphics.Config{
 			Ctx:            context,
 			W:              int(Nan0.sys.av.geometry.max_width),
 			H:              int(Nan0.sys.av.geometry.max_height),
@@ -929,7 +929,7 @@ func deinitVideo() {
 		C.bridge_context_reset(Nan0.Video.hw.context_destroy)
 	}
 	thread.Main(func() {
-		if err := Nan0.sdlCtx.Deinit(); err != nil {
+		if err := Nan0.glCtx.Deinit(); err != nil {
 			Nan0.log.Error().Err(err).Msg("deinit fail")
 		}
 	})

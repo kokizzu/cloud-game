@@ -1,9 +1,12 @@
 ARG BUILD_PATH=/tmp/cloud-game
 ARG VERSION=master
 
+ARG GO_VERSION=1.26.4
+ARG GSTREAMER_VERSION=1.29.2
+
 # gstreamer minimal build
 FROM ubuntu:resolute AS gst-builder
-ARG GST_VERSION=1.28.4
+ARG GSTREAMER_VERSION
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -16,7 +19,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 WORKDIR /gst
 
-RUN git clone --single-branch --depth 1 --branch ${GST_VERSION} \
+RUN git clone --single-branch --depth 1 --branch ${GSTREAMER_VERSION} \
     https://gitlab.freedesktop.org/gstreamer/gstreamer.git .
 
 # fix meson build error
@@ -29,6 +32,8 @@ RUN meson setup builddir \
     -Doptimization=3 \
     -Db_lto=true \
     -Dauto_features=disabled \
+    -Dextra-checks=disabled \
+    -Dbenchmarks=disabled \
     -Dtools=disabled \
     -Dgstreamer:tools=disabled \
     -Dbase=enabled \
@@ -62,8 +67,8 @@ RUN meson setup builddir \
 # base build stage
 FROM ubuntu:resolute AS build0
 ENV DEBIAN_FRONTEND=noninteractive
-ARG GO=1.26.4
-ARG GO_DIST=go${GO}.linux-amd64.tar.gz
+ARG GO_VERSION
+ARG GO_DIST=go${GO_VERSION}.linux-amd64.tar.gz
 
 ADD https://go.dev/dl/$GO_DIST ./
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -107,9 +112,10 @@ COPY --from=gst-builder /usr/local /usr/local
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get -q update && apt-get -q install --no-install-recommends -y \
-    build-essential \
-    libsdl2-dev \
     pkg-config \
+    build-essential \
+    libx11-dev \
+    libgl1-mesa-dev \
     libglib2.0-dev && \
     rm -rf /var/lib/apt/lists/*
 

@@ -522,7 +522,7 @@ func (f *Frontend) Load() error {
 }
 
 func (f *Frontend) IsSupported() error {
-	return graphics.TryInit()
+	return graphics.RGFWTryInit()
 }
 
 func (f *Frontend) autosave(periodSec int) {
