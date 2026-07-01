@@ -261,7 +261,7 @@ func (g *GstMediaPipe) initVideo() (err error) {
 
 	p := g.v
 	fmt := g.vidFmt
-	g.videoCh = make(chan videoJob, 1)
+	g.videoCh = make(chan videoJob, 3)
 	g.videoDone = make(chan struct{})
 	go g.videoWorker(p, fmt, g.videoCh, g.videoDone)
 
