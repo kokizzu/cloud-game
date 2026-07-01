@@ -54,17 +54,17 @@ a better sense of performance.
 ## Development environment
 
 * Install [Go](https://golang.org/doc/install)
-* Install GStreamer and SDL2:
+* Install GStreamer
 
 ```
 # Ubuntu / Windows (WSL2)
-apt-get install -y make gcc pkg-config libsdl2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good
+apt-get install -y make gcc pkg-config libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good
 
 # macOS
-brew install pkg-config sdl2 gstreamer gst-plugins-base gst-plugins-good
+brew install pkg-config gstreamer gst-plugins-base gst-plugins-good
 
 # Windows (MSYS2)
-pacman -Sy --noconfirm --needed git make mingw-w64-ucrt-x86_64-{gcc,pkgconf,dlfcn,SDL2,gstreamer,gst-plugins-base,gst-plugins-good}
+pacman -Sy --noconfirm --needed git make mingw-w64-ucrt-x86_64-{gcc,pkgconf,gstreamer,gst-plugins-base,gst-plugins-good}
 ```
 
 Because the coordinator and workers need to run simultaneously. Workers connect to the coordinator.

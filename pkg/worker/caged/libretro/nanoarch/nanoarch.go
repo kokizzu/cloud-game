@@ -209,37 +209,32 @@ func (n *Nanoarch) CoreLoad(meta Metadata) {
 	n.options4rom = meta.Options4rom
 
 	corePath := meta.LibPath + meta.LibExt
-	coreLib, err = loadLib(corePath)
-	// fallback to sequential lib loader (first successfully loaded)
+	coreLib, err = open(corePath)
 	if err != nil {
-		n.log.Error().Err(err).Msgf("load fail: %v", corePath)
-		coreLib, err = loadLibRollingRollingRolling(corePath)
-		if err != nil {
-			n.log.Fatal().Err(err).Msgf("core load: %s", corePath)
-		}
+		n.log.Fatal().Err(err).Msgf("core load: %s", corePath)
 	}
 
-	retroInit = loadFunction(coreLib, "retro_init")
-	retroDeinit = loadFunction(coreLib, "retro_deinit")
-	retroAPIVersion = loadFunction(coreLib, "retro_api_version")
-	retroGetSystemInfo = loadFunction(coreLib, "retro_get_system_info")
-	retroGetSystemAVInfo = loadFunction(coreLib, "retro_get_system_av_info")
-	retroSetEnvironment = loadFunction(coreLib, "retro_set_environment")
-	retroSetVideoRefresh = loadFunction(coreLib, "retro_set_video_refresh")
-	retroSetInputPoll = loadFunction(coreLib, "retro_set_input_poll")
-	retroSetInputState = loadFunction(coreLib, "retro_set_input_state")
-	retroSetAudioSample = loadFunction(coreLib, "retro_set_audio_sample")
-	retroSetAudioSampleBatch = loadFunction(coreLib, "retro_set_audio_sample_batch")
-	retroReset = loadFunction(coreLib, "retro_reset")
-	retroRun = loadFunction(coreLib, "retro_run")
-	retroLoadGame = loadFunction(coreLib, "retro_load_game")
-	retroUnloadGame = loadFunction(coreLib, "retro_unload_game")
-	retroSerializeSize = loadFunction(coreLib, "retro_serialize_size")
-	retroSerialize = loadFunction(coreLib, "retro_serialize")
-	retroUnserialize = loadFunction(coreLib, "retro_unserialize")
-	retroSetControllerPortDevice = loadFunction(coreLib, "retro_set_controller_port_device")
-	retroGetMemorySize = loadFunction(coreLib, "retro_get_memory_size")
-	retroGetMemoryData = loadFunction(coreLib, "retro_get_memory_data")
+	retroInit = coreLib.load("retro_init")
+	retroDeinit = coreLib.load("retro_deinit")
+	retroAPIVersion = coreLib.load("retro_api_version")
+	retroGetSystemInfo = coreLib.load("retro_get_system_info")
+	retroGetSystemAVInfo = coreLib.load("retro_get_system_av_info")
+	retroSetEnvironment = coreLib.load("retro_set_environment")
+	retroSetVideoRefresh = coreLib.load("retro_set_video_refresh")
+	retroSetInputPoll = coreLib.load("retro_set_input_poll")
+	retroSetInputState = coreLib.load("retro_set_input_state")
+	retroSetAudioSample = coreLib.load("retro_set_audio_sample")
+	retroSetAudioSampleBatch = coreLib.load("retro_set_audio_sample_batch")
+	retroReset = coreLib.load("retro_reset")
+	retroRun = coreLib.load("retro_run")
+	retroLoadGame = coreLib.load("retro_load_game")
+	retroUnloadGame = coreLib.load("retro_unload_game")
+	retroSerializeSize = coreLib.load("retro_serialize_size")
+	retroSerialize = coreLib.load("retro_serialize")
+	retroUnserialize = coreLib.load("retro_unserialize")
+	retroSetControllerPortDevice = coreLib.load("retro_set_controller_port_device")
+	retroGetMemorySize = coreLib.load("retro_get_memory_size")
+	retroGetMemoryData = coreLib.load("retro_get_memory_data")
 
 	C.bridge_retro_set_environment(retroSetEnvironment, C.core_environment_cgo)
 	C.bridge_retro_set_input_state(retroSetInputState, C.core_input_state_cgo)
@@ -390,7 +385,7 @@ func (n *Nanoarch) Shutdown() {
 
 	setRotation(0)
 	Nan0.sys.av = C.struct_retro_system_av_info{}
-	if err := closeLib(coreLib); err != nil {
+	if err := coreLib.close(); err != nil {
 		n.log.Error().Err(err).Msg("lib close failed")
 	}
 	n.options = nil
@@ -611,11 +606,11 @@ func byteCountBinary(b int64) string {
 func (m Metadata) HasHack(h string) bool { return slices.Contains(m.Hacks, h) }
 
 var (
+	coreLib                      *dlib
 	retroAPIVersion              unsafe.Pointer
 	retroDeinit                  unsafe.Pointer
 	retroGetSystemAVInfo         unsafe.Pointer
 	retroGetSystemInfo           unsafe.Pointer
-	coreLib                      unsafe.Pointer
 	retroInit                    unsafe.Pointer
 	retroLoadGame                unsafe.Pointer
 	retroReset                   unsafe.Pointer
