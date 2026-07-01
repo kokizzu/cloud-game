@@ -103,6 +103,7 @@ const resize = (w, h, aspect, fit) => {
         state.screen.style.top = "";
         // hack: cover 1px edge artifact
         state.screen.style.marginLeft = state.flip ? "1px" : "";
+        state.screen.style.marginTop = state.flip ? "-1px" : "";
     }
 };
 
