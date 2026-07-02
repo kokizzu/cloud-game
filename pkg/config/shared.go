@@ -25,11 +25,10 @@ func (l Library) GetSupportedExtensions() []string { return l.Supported }
 type Monitoring struct {
 	Port             int
 	URLPrefix        string
-	MetricEnabled    bool `json:"metric_enabled"`
 	ProfilingEnabled bool `json:"profiling_enabled"`
 }
 
-func (c *Monitoring) IsEnabled() bool { return c.MetricEnabled || c.ProfilingEnabled }
+func (c *Monitoring) IsEnabled() bool { return c.ProfilingEnabled }
 
 type Server struct {
 	Address      string

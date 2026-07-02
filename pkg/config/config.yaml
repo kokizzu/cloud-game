@@ -52,7 +52,6 @@ coordinator:
         port: 6601
         # enable Go profiler HTTP server
         profilingEnabled: false
-        metricEnabled: false
         urlPrefix: /coordinator
     # a custom Origins for incoming Websocket connections:
     # "" -- checks same origin policy
@@ -105,8 +104,6 @@ worker:
         # monitoring server port
         port: 6602
         profilingEnabled: false
-        # monitoring server URL prefix
-        metricEnabled: false
         urlPrefix: /worker
     server:
         address: :9000
