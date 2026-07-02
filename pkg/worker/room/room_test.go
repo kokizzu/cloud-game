@@ -7,7 +7,6 @@ import (
 	"hash/crc32"
 	"image"
 	"image/color"
-	"image/draw"
 	"image/png"
 	"log"
 	"math"
@@ -26,9 +25,6 @@ import (
 	"github.com/giongto35/cloud-game/v3/pkg/worker/caged/app"
 	"github.com/giongto35/cloud-game/v3/pkg/worker/media"
 	"github.com/giongto35/cloud-game/v3/pkg/worker/thread"
-	"golang.org/x/image/font"
-	"golang.org/x/image/font/basicfont"
-	"golang.org/x/image/math/fixed"
 
 	_ "github.com/giongto35/cloud-game/v3/test"
 )
@@ -158,23 +154,12 @@ func TestAll(t *testing.T) {
 			}
 			dst := ToRGBA(src, flip)
 			tag := fmt.Sprintf("%v-%v-0x%08x", runtime.GOOS, test.game.Type, crc32.Checksum(frame.Data, crc32q))
-			dumpCanvas(dst, tag, fmt.Sprintf("%v [%v]", tag, test.frames), outputPath)
+			dumpCanvas(dst, tag, outputPath)
 		}
 	}
 }
 
-func dumpCanvas(frame *image.RGBA, name string, caption string, path string) {
-	// slap 'em caption
-	if caption != "" {
-		draw.Draw(frame, image.Rect(8, 8, 8+len(caption)*7+3, 24), &image.Uniform{C: color.RGBA{}}, image.Point{}, draw.Src)
-		(&font.Drawer{
-			Dst:  frame,
-			Src:  image.NewUniform(color.RGBA{R: 255, G: 255, B: 255, A: 255}),
-			Face: basicfont.Face7x13,
-			Dot:  fixed.Point26_6{X: fixed.Int26_6(10 * 64), Y: fixed.Int26_6(20 * 64)},
-		}).DrawString(caption)
-	}
-
+func dumpCanvas(frame *image.RGBA, name string, path string) {
 	outPath := testTempDir
 	if path != "" {
 		outPath = path
