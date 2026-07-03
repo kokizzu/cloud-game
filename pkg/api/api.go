@@ -41,8 +41,8 @@ type (
 
 type In[I Id] struct {
 	Id      I               `json:"id,omitempty"`
-	T       PT              `json:"t"`
 	Payload json.RawMessage `json:"p,omitempty"` // should be json.RawMessage for 2-pass unmarshal
+	T       PT              `json:"t"`
 }
 
 func (i In[I]) GetId() I           { return i.Id }
@@ -50,9 +50,9 @@ func (i In[I]) GetPayload() []byte { return i.Payload }
 func (i In[I]) GetType() PT        { return i.T }
 
 type Out struct {
+	Payload any    `json:"p,omitempty"`
 	Id      string `json:"id,omitempty"` // string because omitempty won't work as intended with arrays
 	T       uint8  `json:"t"`
-	Payload any    `json:"p,omitempty"`
 }
 
 func (o *Out) SetId(s string)          { o.Id = s }
