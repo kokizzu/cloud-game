@@ -3,12 +3,12 @@ package worker
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/giongto35/cloud-game/v3/pkg/config"
 	"github.com/giongto35/cloud-game/v3/pkg/games"
 	"github.com/giongto35/cloud-game/v3/pkg/logger"
 	"github.com/giongto35/cloud-game/v3/pkg/monitoring"
-	"github.com/giongto35/cloud-game/v3/pkg/network"
 	"github.com/giongto35/cloud-game/v3/pkg/network/httpx"
 	"github.com/giongto35/cloud-game/v3/pkg/worker/caged"
 	"github.com/giongto35/cloud-game/v3/pkg/worker/cloud"
@@ -90,11 +90,10 @@ func (w *Worker) Start(done chan struct{}) {
 	}
 
 	// !to restore alive worker info when coordinator connection was lost
-	retry := network.NewRetry()
-
+	retryStep := 5 * time.Second
 	onRetryFail := func(err error) {
-		w.log.Warn().Err(err).Msgf("socket fail. Retrying in %v", retry.Time())
-		retry.Fail().Multiply(2)
+		w.log.Warn().Err(err).Msgf("socket fail. Retrying in %v", retryStep)
+		backoff(&retryStep, 1*time.Hour)
 	}
 
 	go func() {
@@ -124,7 +123,7 @@ func (w *Worker) Start(done chan struct{}) {
 				w.cord.SendLibrary(w)
 				w.cord.SendPrevSessions(w)
 				<-wait
-				retry.Success()
+				retryStep = 5 * time.Second
 			}
 		}
 	}()
@@ -141,3 +140,6 @@ func (w *Worker) Stop() error {
 	}
 	return err
 }
+
+// backoff doubles the sleep duration up to the max
+func backoff(d *time.Duration, max time.Duration) { time.Sleep(*d); *d = min(*d*2, max) }
