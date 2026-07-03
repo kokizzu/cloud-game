@@ -132,16 +132,18 @@ func (t *RPC[_, _]) Call(w Writer, rq HasCallId) ([]byte, error) {
 	task := &request{done: make(chan struct{})}
 	t.calls.Put(id, task)
 	w.Write(r)
+	timer := time.NewTimer(t.callTimeout())
 	select {
 	case <-task.done:
-	case <-time.After(t.callTimeout()):
+		timer.Stop()
+	case <-timer.C:
 		task.err = errTimeout
 	}
 	return task.response, task.err
 }
 
 func (t *RPC[_, P]) handleMessage(message []byte) error {
-	res := *new(P)
+	var res P
 	if err := json.Unmarshal(message, &res); err != nil {
 		return err
 	}
