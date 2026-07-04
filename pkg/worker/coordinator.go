@@ -54,7 +54,7 @@ func newCoordinatorConnection(host string, conf config.Worker, addr string, log 
 	}
 
 	clog := log.Extend(log.With().Str(logger.ClientField, "c"))
-	client := com.NewConnection[api.PT, api.In[com.Uid], api.Out, *api.Out](conn, id, clog)
+	client := com.NewConnection[api.PT, api.In[com.Uid], api.Out](conn, id, clog)
 
 	return &coordinator{
 		Connection: client,

@@ -177,4 +177,5 @@ func (t *RPC[_, _]) Cleanup() {
 		}
 		close(task.done)
 	}
+	t.calls.Clear()
 }

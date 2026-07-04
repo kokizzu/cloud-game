@@ -60,7 +60,7 @@ type AppMeta struct {
 }
 
 func NewWorker(sock *com.Connection, handshake api.ConnectionRequest[com.Uid], log *logger.Logger) *Worker {
-	conn := com.NewConnection[api.PT, api.In[com.Uid], api.Out, *api.Out](sock, handshake.Id, log)
+	conn := com.NewConnection[api.PT, api.In[com.Uid], api.Out](sock, handshake.Id, log)
 	return &Worker{
 		Connection: conn,
 		Addr:       handshake.Addr,
