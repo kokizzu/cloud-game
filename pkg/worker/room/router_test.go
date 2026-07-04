@@ -1,6 +1,7 @@
 package room
 
 import (
+	"sync"
 	"testing"
 	"time"
 
@@ -74,6 +75,65 @@ func TestRouterReset(t *testing.T) {
 	}
 	if !router.Users().Empty() {
 		t.Errorf("has users after reset, but should not")
+	}
+}
+
+func TestRouterRemove(t *testing.T) {
+	router := newTestRouter()
+	router.room = &Room[*tSession]{}
+	u1 := &tSession{id: "u1"}
+	u2 := &tSession{id: "u2"}
+	router.AddUser(u1)
+	router.AddUser(u2)
+
+	closed := false
+	router.room.HandleClose = func() { closed = true }
+
+	router.Remove(u1)
+	if router.Users().Empty() {
+		t.Error("should have user u2")
+	}
+	if closed {
+		t.Error("room should not close while wiht users")
+	}
+
+	router.Remove(u2)
+	if !router.Users().Empty() {
+		t.Error("should be empty after last user removed")
+	}
+	if !closed {
+		t.Error("room should close when last user leaves")
+	}
+}
+
+func TestRouterRemove_Race(t *testing.T) {
+	router := newTestRouter()
+	router.room = &Room[*tSession]{}
+
+	var emptyAtClose bool
+	router.room.HandleClose = func() {
+		emptyAtClose = router.Users().Empty()
+	}
+
+	var wg sync.WaitGroup
+	n := 5
+	wg.Add(n)
+
+	for range n {
+		go func() {
+			defer wg.Done()
+			for range 100 {
+				u := &tSession{id: "u"}
+				router.AddUser(u)
+				router.Remove(u)
+			}
+		}()
+	}
+
+	wg.Wait()
+
+	if closed := router.Room() == nil; closed && !emptyAtClose {
+		t.Error("room closed while users still present")
 	}
 }
 

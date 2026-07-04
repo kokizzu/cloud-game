@@ -26,7 +26,7 @@ type SessionManager[T Session] interface {
 	Add(T) bool
 	Empty() bool
 	Find(string) T
-	RemoveL(T) int
+	Remove(T)
 	// Reset used for proper cleanup of the resources if needed.
 	Reset()
 	Values() iter.Seq[T]
@@ -127,31 +127,35 @@ func (r *Router[T]) FindRoom(id string) *Room[T] {
 	return nil
 }
 
-func (r *Router[T]) Remove(user T) {
-	if left := r.users.RemoveL(user); left == 0 {
-		r.Close()
-		r.SetRoom(nil) // !to remove
-	}
-}
-
-func (r *Router[T]) AddUser(user T)           { r.users.Add(user) }
-func (r *Router[T]) Close()                   { r.mu.Lock(); r.room.Close(); r.room = nil; r.mu.Unlock() }
+func (r *Router[T]) AddUser(user T)           { r.mu.Lock(); r.users.Add(user); r.mu.Unlock() }
 func (r *Router[T]) FindUser(uid string) T    { return r.users.Find(uid) }
+func (r *Router[T]) Users() SessionManager[T] { return r.users }
 func (r *Router[T]) Room() *Room[T]           { r.mu.Lock(); defer r.mu.Unlock(); return r.room }
 func (r *Router[T]) SetRoom(room *Room[T])    { r.mu.Lock(); r.room = room; r.mu.Unlock() }
 func (r *Router[T]) HasRoom() bool            { r.mu.Lock(); defer r.mu.Unlock(); return r.room != nil }
-func (r *Router[T]) Users() SessionManager[T] { return r.users }
+func (r *Router[T]) Close()                   { r.mu.Lock(); r.close(); r.mu.Unlock() }
 func (r *Router[T]) Reset() {
 	r.mu.Lock()
-	if r.room != nil {
-		r.room.Close()
-		r.room = nil
-	}
+	r.close()
 	for u := range r.users.Values() {
 		u.Disconnect()
 	}
 	r.users.Reset()
 	r.mu.Unlock()
+}
+func (r *Router[T]) Remove(user T) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.users.Remove(user)
+	if r.users.Empty() {
+		r.close()
+	}
+}
+func (r *Router[T]) close() {
+	if r.room != nil {
+		r.room.Close()
+		r.room = nil
+	}
 }
 
 type AppSession struct {

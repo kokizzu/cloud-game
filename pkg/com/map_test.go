@@ -53,6 +53,36 @@ func TestMap_Base(t *testing.T) {
 	}
 }
 
+func TestMap_Remove(t *testing.T) {
+	m := Map[int, int]{m: make(map[int]int)}
+
+	m.Put(1, 10)
+	m.Put(2, 20)
+
+	if m.Len() == 0 {
+		t.Error("should not be empty after puts")
+	}
+
+	m.Remove(1)
+	if m.Len() == 0 {
+		t.Error("should not be empty, key 2 remains")
+	}
+	if m.Len() != 1 {
+		t.Errorf("expected len 1, got %v", m.Len())
+	}
+
+	m.Remove(2)
+	if m.Len() != 0 {
+		t.Error("should be empty after removing last key")
+	}
+
+	// Remove of non-existent key is a no-op.
+	m.Remove(99)
+	if m.Len() != 0 {
+		t.Error("should still be empty after no-op remove")
+	}
+}
+
 func TestMap_Concurrency(t *testing.T) {
 	m := Map[int, int]{m: make(map[int]int)}
 	for i := range 100 {

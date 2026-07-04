@@ -21,7 +21,6 @@ func NewNetMap[K stringer, T NetClient[K]]() NetMap[K, T] {
 func (m *NetMap[K, T]) Add(client T) bool         { return m.Put(client.Id(), client) }
 func (m *NetMap[K, T]) Empty() bool               { return m.Map.Len() == 0 }
 func (m *NetMap[K, T]) Remove(client T)           { m.Map.Remove(client.Id()) }
-func (m *NetMap[K, T]) RemoveL(client T) int      { return m.Map.RemoveL(client.Id()) }
 func (m *NetMap[K, T]) Reset()                    { m.Map = Map[K, T]{m: make(map[K]T, 10)} }
 func (m *NetMap[K, T]) RemoveDisconnect(client T) { client.Disconnect(); m.Remove(client) }
 func (m *NetMap[K, T]) Find(id string) T {

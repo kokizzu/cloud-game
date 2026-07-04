@@ -92,14 +92,6 @@ func (m *Map[K, V]) Pop(key K) V {
 	return val
 }
 
-// RemoveL removes the key and returns the new length of the map.
-func (m *Map[K, _]) RemoveL(key K) int {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	delete(m.m, key)
-	return len(m.m)
-}
-
 // Clear empties the map.
 func (m *Map[K, V]) Clear() {
 	m.mu.Lock()
