@@ -57,6 +57,8 @@ type GameLibrary interface {
 	FindGameByName(name string) GameMetadata
 	Sessions() []string
 	Scan()
+	ForEach(func(GameMetadata))
+	GamesCount() int
 }
 
 type WithEmulatorInfo interface {
@@ -118,14 +120,32 @@ func NewLib(conf config.Library, emu WithEmulatorInfo, log *logger.Logger) GameL
 }
 
 func (lib *library) Sessions() []string {
+	lib.mu.Lock()
+	defer lib.mu.Unlock()
 	return lib.sessions
 }
 
+func (lib *library) ForEach(fn func(GameMetadata)) {
+	lib.mu.Lock()
+	defer lib.mu.Unlock()
+	for _, v := range lib.games {
+		fn(v)
+	}
+}
+
+func (lib *library) GamesCount() int {
+	lib.mu.Lock()
+	defer lib.mu.Unlock()
+	return len(lib.games)
+}
+
 func (lib *library) GetAll() []GameMetadata {
-	var res []GameMetadata
+	lib.mu.Lock()
+	res := make([]GameMetadata, 0, len(lib.games))
 	for _, value := range lib.games {
 		res = append(res, value)
 	}
+	lib.mu.Unlock()
 	return res
 }
 
@@ -246,7 +266,9 @@ func (lib *library) Scan() {
 	}
 
 	if len(games) > 0 {
+		lib.mu.Lock()
 		lib.set(games)
+		lib.mu.Unlock()
 	}
 
 	var sessions []string
@@ -261,7 +283,9 @@ func (lib *library) Scan() {
 		}
 		return nil
 	})
+	lib.mu.Lock()
 	lib.sessions = sessions
+	lib.mu.Unlock()
 
 	lib.lastScanDuration = time.Since(start)
 	if lib.config.verbose {

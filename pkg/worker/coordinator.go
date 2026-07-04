@@ -6,6 +6,7 @@ import (
 	"github.com/giongto35/cloud-game/v3/pkg/api"
 	"github.com/giongto35/cloud-game/v3/pkg/com"
 	"github.com/giongto35/cloud-game/v3/pkg/config"
+	"github.com/giongto35/cloud-game/v3/pkg/games"
 	"github.com/giongto35/cloud-game/v3/pkg/logger"
 	"github.com/giongto35/cloud-game/v3/pkg/network/webrtc"
 )
@@ -115,12 +116,10 @@ func (c *coordinator) IceCandidate(candidate string, sessionId string) {
 }
 
 func (c *coordinator) SendLibrary(w *Worker) {
-	g := w.lib.GetAll()
-
-	var gg = make([]api.GameInfo, len(g))
-	for i, g := range g {
-		gg[i] = api.GameInfo(g)
-	}
+	gg := make([]api.GameInfo, 0, w.lib.GamesCount())
+	w.lib.ForEach(func(g games.GameMetadata) {
+		gg = append(gg, api.GameInfo(g))
+	})
 
 	c.Notify(api.LibNewGameList, api.LibGameListInfo{T: 1, List: gg})
 }
@@ -129,7 +128,7 @@ func (c *coordinator) SendPrevSessions(w *Worker) {
 	sessions := w.lib.Sessions()
 
 	// extract ids from save states, i.e. sessions
-	var ids []string
+	ids := make([]string, 0, len(sessions))
 
 	for _, id := range sessions {
 		x, _ := api.ExplodeDeepLink(id)
