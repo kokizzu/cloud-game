@@ -14,10 +14,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     printf "path-exclude=/usr/share/locale/*\npath-exclude=/usr/share/man/*\npath-exclude=/usr/share/doc/*\npath-include=/usr/share/doc/*/copyright\n" >/etc/dpkg/dpkg.cfg.d/01_nodoc && \
     apt-get -o DPkg::Options::="--force-unsafe-io" \
             -q update && apt-get -q install --no-install-recommends -y \
-    build-essential ca-certificates curl flex bison git \
-    meson ninja-build pkg-config python3 \
-    libglib2.0-dev libffi-dev zlib1g-dev libssl-dev \
-    libopus-dev libvpx-dev liborc-0.4-dev
+    git ca-certificates \
+    build-essential flex bison meson ninja-build python3 \
+    libglib2.0-dev liborc-0.4-dev \
+    libopus-dev libvpx-dev
 
 WORKDIR /gst
 
@@ -117,7 +117,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     printf "path-exclude=/usr/share/locale/*\npath-exclude=/usr/share/man/*\npath-exclude=/usr/share/doc/*\npath-include=/usr/share/doc/*/copyright\n" >/etc/dpkg/dpkg.cfg.d/01_nodoc && \
     apt-get -q update && apt-get -q install --no-install-recommends -y \
     pkg-config \
-    build-essential \
+    gcc \
     libx11-dev \
     libgl1-mesa-dev \
     libglib2.0-dev && \
