@@ -97,6 +97,7 @@ var pixFmtToGst = map[uint32]string{
 	pixFmtBGRA:  "BGRA",
 	pixFmtRGB16: "RGB16",
 }
+var audioBufPool = sync.Pool{New: func() any { b := make([]byte, 4096); return &b }}
 var pixFmtCache = map[string]uint32{}
 
 func init() {
@@ -118,13 +119,12 @@ func init() {
 // Video encoding is done in a single goroutine to avoid races.
 // Audio is pulled from the appsink on GStreamer's own audio thread.
 //
-// Goroutines (3):
+// Goroutines (4):
 //   - video worker x1 (push+pull loop for video encoding)
-//   - bus messages x2 (one per pipeline, bus message logging)
+//   - audio push x1 (audio queue for GStreamer)
+//   - bus messages  x2 (one per pipeline, bus message logging)
 type GstMediaPipe struct {
 	a, v *pipe
-
-	onAudio func([]byte, time.Duration)
 
 	conf config.Encoder
 
@@ -147,6 +147,9 @@ type GstMediaPipe struct {
 	keyI     int  // periodic keyframe counter
 	kfi      int  // 0=GStreamer auto, >0=force keyframe every N frames
 	aSegSent bool // for Opusenc bug
+
+	audioCh chan []byte
+	onAudio func([]byte, time.Duration)
 
 	// used for reinit
 	videoCh   chan videoJob
@@ -236,6 +239,8 @@ func (g *GstMediaPipe) initAudio() (err error) {
 		return
 	}
 	g.a.sink.SetCallbacks(&app.SinkCallbacks{NewSampleFunc: g.pullAudio})
+	g.audioCh = make(chan []byte, 2)
+	go g.pushAudio()
 	return g.a.pipeline.SetState(gst.StatePlaying)
 }
 
@@ -261,7 +266,7 @@ func (g *GstMediaPipe) initVideo() (err error) {
 
 	p := g.v
 	fmt := g.vidFmt
-	g.videoCh = make(chan videoJob, 3)
+	g.videoCh = make(chan videoJob, 1)
 	g.videoDone = make(chan struct{})
 	go g.videoWorker(p, fmt, g.videoCh, g.videoDone)
 
@@ -285,6 +290,9 @@ func (g *GstMediaPipe) Destroy() {
 
 	g.reinit.Store(true)
 
+	if g.audioCh != nil {
+		close(g.audioCh)
+	}
 	if g.videoCh != nil {
 		g.v.stop()
 		close(g.videoCh)
@@ -299,11 +307,32 @@ func (g *GstMediaPipe) Destroy() {
 
 func (g *GstMediaPipe) ProcessAudio(audio []byte, cb func([]byte, time.Duration)) {
 	g.onAudio = cb
-	if !g.aSegSent {
-		g.aSegSent = true
-		g.a.srcPad.PushEvent(gst.NewSegmentEvent(cachedSegment))
+	buf := audioBufPool.Get().(*[]byte)
+	if cap(*buf) < len(audio) {
+		*buf = make([]byte, len(audio))
 	}
-	C.pushAudioBuf(g.a.src(), unsafe.Pointer(&audio[0]), C.gsize(len(audio)))
+	*buf = (*buf)[:len(audio)]
+	copy(*buf, audio)
+	select {
+	case g.audioCh <- *buf:
+	default:
+		audioBufPool.Put(buf)
+	}
+}
+
+func (g *GstMediaPipe) pushAudio() {
+	for data := range g.audioCh {
+		if g.reinit.Load() || g.a == nil {
+			audioBufPool.Put(&data)
+			continue
+		}
+		if !g.aSegSent {
+			g.aSegSent = true
+			g.a.srcPad.PushEvent(gst.NewSegmentEvent(cachedSegment))
+		}
+		C.pushAudioBuf(g.a.src(), unsafe.Pointer(&data[0]), C.gsize(len(data)))
+		audioBufPool.Put(&data)
+	}
 }
 
 // pullAudio pulls audio buffers from the appsink when they are available.

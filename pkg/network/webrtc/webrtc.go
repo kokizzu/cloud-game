@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/giongto35/cloud-game/v3/pkg/logger"
@@ -24,8 +23,6 @@ type Peer struct {
 
 	onMessage func(data []byte)
 }
-
-var samplePool sync.Pool
 
 var DefaultOfferAnswerOptions = webrtc.OfferAnswerOptions{ICETricklingSupported: true}
 var DefaultOfferOptions = webrtc.OfferOptions{OfferAnswerOptions: DefaultOfferAnswerOptions}
@@ -221,33 +218,18 @@ func (p *Peer) Channel(label string, conf *webrtc.DataChannelInit, onMessage fun
 }
 
 func (p *Peer) SendAudio(dat []byte, dur time.Duration) {
-	if err := p.send(dat, dur, p.a.WriteSample); err != nil {
+	if err := p.a.WriteSample(media.Sample{Data: dat, Duration: dur}); err != nil {
 		p.log.Error().Err(err).Send()
 	}
 }
 
 func (p *Peer) SendVideo(data []byte, dur time.Duration) {
-	if err := p.send(data, dur, p.v.WriteSample); err != nil {
+	if err := p.v.WriteSample(media.Sample{Data: data, Duration: dur}); err != nil {
 		p.log.Error().Err(err).Send()
 	}
 }
 
 func (p *Peer) SendData(data []byte) { _ = p.d.Send(data) }
-
-func (p *Peer) send(data []byte, duration time.Duration, fn func(media.Sample) error) error {
-	sample, _ := samplePool.Get().(*media.Sample)
-	if sample == nil {
-		sample = new(media.Sample)
-	}
-	sample.Data = data
-	sample.Duration = duration
-	err := fn(*sample)
-	if err != nil {
-		return err
-	}
-	samplePool.Put(sample)
-	return nil
-}
 
 func (p *Peer) Disconnect() {
 	if p.c == nil {
