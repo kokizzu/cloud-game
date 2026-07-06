@@ -50,6 +50,9 @@ type Room[T Session] struct {
 	media MediaPipe
 	users SessionManager[T]
 
+	peers   []T
+	peersMu sync.RWMutex
+
 	closed      bool
 	HandleClose func()
 }
@@ -71,13 +74,19 @@ func (r *Room[T]) InitMedia() {
 }
 
 func (r *Room[T]) sendAudio(data []byte, dur time.Duration) {
-	for u := range r.users.Values() {
+	r.peersMu.RLock()
+	peers := r.peers
+	r.peersMu.RUnlock()
+	for _, u := range peers {
 		u.SendAudio(data, dur)
 	}
 }
 
 func (r *Room[T]) sendVideo(data []byte, dur time.Duration) {
-	for u := range r.users.Values() {
+	r.peersMu.RLock()
+	peers := r.peers
+	r.peersMu.RUnlock()
+	for _, u := range peers {
 		u.SendVideo(data, dur)
 	}
 }
@@ -88,9 +97,26 @@ func (r *Room[T]) SetApp(app app.App)   { r.app = app }
 func (r *Room[T]) SetMedia(m MediaPipe) { r.media = m }
 func (r *Room[T]) StartApp()            { r.app.Start() }
 func (r *Room[T]) Send(data []byte) {
-	for u := range r.users.Values() {
+	r.peersMu.RLock()
+	peers := r.peers
+	r.peersMu.RUnlock()
+	for _, u := range peers {
 		u.SendData(data)
 	}
+}
+
+// SyncPeers rebuilds the cached peer slice from the session manager.
+// Must be called after any add/remove/reset of sessions.
+func (r *Room[T]) SyncPeers() {
+	if r.users == nil {
+		return
+	}
+	r.peersMu.Lock()
+	r.peers = r.peers[:0]
+	for u := range r.users.Values() {
+		r.peers = append(r.peers, u)
+	}
+	r.peersMu.Unlock()
 }
 
 func (r *Room[T]) Close() {
@@ -127,13 +153,27 @@ func (r *Router[T]) FindRoom(id string) *Room[T] {
 	return nil
 }
 
-func (r *Router[T]) AddUser(user T)           { r.mu.Lock(); r.users.Add(user); r.mu.Unlock() }
+func (r *Router[T]) AddUser(user T) {
+	r.mu.Lock()
+	r.users.Add(user)
+	r.mu.Unlock()
+	if r.room != nil {
+		r.room.SyncPeers()
+	}
+}
 func (r *Router[T]) FindUser(uid string) T    { return r.users.Find(uid) }
 func (r *Router[T]) Users() SessionManager[T] { return r.users }
 func (r *Router[T]) Room() *Room[T]           { r.mu.Lock(); defer r.mu.Unlock(); return r.room }
-func (r *Router[T]) SetRoom(room *Room[T])    { r.mu.Lock(); r.room = room; r.mu.Unlock() }
-func (r *Router[T]) HasRoom() bool            { r.mu.Lock(); defer r.mu.Unlock(); return r.room != nil }
-func (r *Router[T]) Close()                   { r.mu.Lock(); r.close(); r.mu.Unlock() }
+func (r *Router[T]) SetRoom(room *Room[T]) {
+	r.mu.Lock()
+	r.room = room
+	r.mu.Unlock()
+	if room != nil {
+		room.SyncPeers()
+	}
+}
+func (r *Router[T]) HasRoom() bool { r.mu.Lock(); defer r.mu.Unlock(); return r.room != nil }
+func (r *Router[T]) Close()        { r.mu.Lock(); r.close(); r.mu.Unlock() }
 func (r *Router[T]) Reset() {
 	r.mu.Lock()
 	r.close()
@@ -141,12 +181,18 @@ func (r *Router[T]) Reset() {
 		u.Disconnect()
 	}
 	r.users.Reset()
+	if r.room != nil {
+		r.room.SyncPeers()
+	}
 	r.mu.Unlock()
 }
 func (r *Router[T]) Remove(user T) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.users.Remove(user)
+	if r.room != nil {
+		r.room.SyncPeers()
+	}
 	if r.users.Empty() {
 		r.close()
 	}
