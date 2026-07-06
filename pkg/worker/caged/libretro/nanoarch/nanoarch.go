@@ -721,13 +721,21 @@ func coreLog(level C.enum_retro_log_level, msg *C.char) {
 	switch level {
 	// with debug level cores have too much logs
 	case C.RETRO_LOG_DEBUG:
-		Nan0.log.Debug().MsgFunc(func() string { return m(msg) })
+		if Nan0.log.GetLevel() <= logger.DebugLevel {
+			Nan0.log.Debug().MsgFunc(func() string { return m(msg) })
+		}
 	case C.RETRO_LOG_INFO:
-		Nan0.log.Info().MsgFunc(func() string { return m(msg) })
+		if Nan0.log.GetLevel() <= logger.InfoLevel {
+			Nan0.log.Info().MsgFunc(func() string { return m(msg) })
+		}
 	case C.RETRO_LOG_WARN:
-		Nan0.log.Warn().MsgFunc(func() string { return m(msg) })
+		if Nan0.log.GetLevel() <= logger.WarnLevel {
+			Nan0.log.Warn().MsgFunc(func() string { return m(msg) })
+		}
 	case C.RETRO_LOG_ERROR:
-		Nan0.log.Error().MsgFunc(func() string { return m(msg) })
+		if Nan0.log.GetLevel() <= logger.ErrorLevel {
+			Nan0.log.Error().MsgFunc(func() string { return m(msg) })
+		}
 	default:
 		Nan0.log.Log().MsgFunc(func() string { return m(msg) })
 		// RETRO_LOG_DUMMY = INT_MAX

@@ -56,7 +56,9 @@ func NewConnection[T ~uint8, P Packet[T], X any, P2 Packet2[X]](conn *Connection
 func (c *SocketClient[T, P, _, _]) ProcessPackets(fn func(in P) error) chan struct{} {
 	c.rpc = NewRPC[T, P]()
 	c.rpc.Handler = func(p P) {
-		c.log.Debug().Str(logger.DirectionField, logger.MarkIn).Msgf("%v", p.GetType())
+		if c.log.GetLevel() <= logger.DebugLevel {
+			c.log.Debug().Str(logger.DirectionField, logger.MarkIn).Msgf("%v", p.GetType())
+		}
 		if err := fn(p); err != nil { // 3rd handler
 			c.log.Error().Err(err).Send()
 		}
@@ -92,7 +94,9 @@ func (c *SocketClient[_, P, X, P2]) Route(in P, out P2) {
 
 // Send makes a blocking call.
 func (c *SocketClient[T, P, X, P2]) Send(t T, data any) ([]byte, error) {
-	c.log.Debug().Str(logger.DirectionField, logger.MarkOut).Msgf("ᵇ%v", t)
+	if c.log.GetLevel() <= logger.DebugLevel {
+		c.log.Debug().Str(logger.DirectionField, logger.MarkOut).Msgf("ᵇ%v", t)
+	}
 	rq := P2(new(X))
 	rq.SetType(uint8(t))
 	rq.SetPayload(data)
@@ -101,7 +105,9 @@ func (c *SocketClient[T, P, X, P2]) Send(t T, data any) ([]byte, error) {
 
 // Notify just sends a message and goes further.
 func (c *SocketClient[T, P, X, P2]) Notify(t T, data any) {
-	c.log.Debug().Str(logger.DirectionField, logger.MarkOut).Msgf("%v", t)
+	if c.log.GetLevel() <= logger.DebugLevel {
+		c.log.Debug().Str(logger.DirectionField, logger.MarkOut).Msgf("%v", t)
+	}
 	rq := P2(new(X))
 	rq.SetType(uint8(t))
 	rq.SetPayload(data)
