@@ -11,9 +11,11 @@ import (
 type Caged struct {
 	Emulator
 
-	base *Frontend // maintains the root for mad embedding
-	conf CagedConf
-	log  *logger.Logger
+	base  *Frontend // maintains the root for mad embedding
+	conf  CagedConf
+	log   *logger.Logger
+	Ready <-chan struct{}
+	ready chan struct{}
 }
 
 type CagedConf struct {
@@ -24,11 +26,13 @@ type CagedConf struct {
 func (c *Caged) Name() string { return "libretro" }
 
 func Cage(conf CagedConf, log *logger.Logger) Caged {
-	return Caged{conf: conf, log: log}
+	ch := make(chan struct{})
+	return Caged{conf: conf, log: log, Ready: ch, ready: ch}
 }
 
 func (c *Caged) Init() error {
 	go func() {
+		defer close(c.ready)
 		if err := manager.CheckCores(c.conf.Emulator, c.log); err != nil {
 			c.log.Warn().Err(err).Msgf("a Libretro cores sync fail")
 		}
