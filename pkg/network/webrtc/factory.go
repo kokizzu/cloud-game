@@ -75,6 +75,7 @@ func NewApiFactory(conf config.Webrtc, log *logger.Logger, mod ModApiFun) (api *
 
 	s.SetICEMulticastDNSMode(ice.MulticastDNSModeDisabled)
 	s.EnableSCTPZeroChecksum(true)
+	s.EnableSctpSnap(true)
 	if len(conf.IpFilter) > 0 {
 		s.SetIPFilter(func(i net.IP) (keep bool) {
 			return filterIP(i, conf.IpFilter)
