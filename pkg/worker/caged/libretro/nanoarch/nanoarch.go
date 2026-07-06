@@ -40,6 +40,7 @@ type Nanoarch struct {
 	retropad InputState
 
 	keyboardCb    *C.struct_retro_keyboard_callback
+	frameTimeCb   *C.struct_retro_frame_time_callback
 	LastFrameTime time.Time
 	LibCo         bool
 	meta          Metadata
@@ -424,6 +425,12 @@ func (n *Nanoarch) Run() {
 		if n.Video.gl.enabled {
 			runtime.UnlockOSThread()
 		}
+	}
+}
+
+func (n *Nanoarch) NotifyFrameTime(usec int64) {
+	if n.frameTimeCb != nil {
+		C.call_frame_time_cb(n.frameTimeCb, C.retro_usec_t(usec))
 	}
 }
 
@@ -875,6 +882,10 @@ func coreEnvironment(cmd C.unsigned, data unsafe.Pointer) C.bool {
 	case C.RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY:
 		latency := *(*C.unsigned)(data)
 		Nan0.log.Info().Uint("latency_ms", uint(latency)).Msg("audio latency requested")
+		return true
+	case C.RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK:
+		Nan0.frameTimeCb = (*C.struct_retro_frame_time_callback)(data)
+		Nan0.log.Info().Msg("Frame time callback registered")
 		return true
 	}
 	return false

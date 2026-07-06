@@ -337,6 +337,8 @@ func (f *Frontend) Start() {
 		case <-f.done:
 			return
 		default:
+			f.nano.NotifyFrameTime(targetFrameTimeNs / 1000)
+
 			f.Tick()
 
 			now := os.Nanotime()

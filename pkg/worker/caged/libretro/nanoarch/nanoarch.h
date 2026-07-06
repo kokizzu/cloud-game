@@ -41,4 +41,9 @@ static inline void call_audio_buffer_status(
 	if (cb && cb->callback) cb->callback(active, occupancy, underrun);
 }
 
+static inline void call_frame_time_cb(
+	struct retro_frame_time_callback *cb, retro_usec_t usec) {
+	if (cb && cb->callback) cb->callback(usec);
+}
+
 #endif
