@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"context"
+
 	"github.com/giongto35/cloud-game/v3/pkg/config"
 	"github.com/giongto35/cloud-game/v3/pkg/logger"
 	"github.com/giongto35/cloud-game/v3/pkg/os"
@@ -60,13 +62,13 @@ func CheckCores(conf config.Emulator, log *logger.Logger) error {
 	if err := os.MakeDirAll(coreManager.Conf.GetCoresStorePath()); err != nil {
 		return err
 	}
-	if err := coreManager.Sync(); err != nil {
+	if err := coreManager.Sync(context.Background()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *Manager) Sync() error {
+func (m *Manager) Sync(ctx context.Context) error {
 	// IPC lock if multiple worker processes on the same machine
 	err := m.fmu.Lock()
 	if err != nil {
@@ -84,7 +86,7 @@ func (m *Manager) Sync() error {
 		return err
 	}
 	download := diff(m.Conf.GetCores(), installed)
-	if failed := m.download(download); len(failed) > 0 {
+	if failed := m.download(ctx, download); len(failed) > 0 {
 		m.log.Warn().Msgf("[core-dl] error: unable to download these cores: %v", failed)
 	}
 	return nil
@@ -97,7 +99,7 @@ func (m *Manager) getCoreUrls(names []string, repo Repository) (urls []Download)
 	return
 }
 
-func (m *Manager) download(cores []config.CoreInfo) (failed []string) {
+func (m *Manager) download(ctx context.Context, cores []config.CoreInfo) (failed []string) {
 	if len(cores) == 0 || m.repo == nil {
 		return
 	}
@@ -120,26 +122,26 @@ func (m *Manager) download(cores []config.CoreInfo) (failed []string) {
 	}
 
 	m.log.Info().Msgf("[core-dl] <<< download | main: %v | alt: %v", prime, second)
-	primeFails := m.down(prime, m.repo)
+	primeFails := m.down(ctx, prime, m.repo)
 	if len(primeFails) > 0 && m.altRepo != nil {
 		m.log.Warn().Msgf("[core-dl] error: unable to download some cores, trying 2nd repository")
-		failed = append(failed, m.down(primeFails, m.altRepo)...)
+		failed = append(failed, m.down(ctx, primeFails, m.altRepo)...)
 	}
 	if m.altRepo != nil {
-		altFails := m.down(second, m.altRepo)
+		altFails := m.down(ctx, second, m.altRepo)
 		if len(altFails) > 0 {
 			m.log.Error().Msgf("[core-dl] error: unable to download some cores, trying 1st repository")
-			failed = append(failed, m.down(altFails, m.repo)...)
+			failed = append(failed, m.down(ctx, altFails, m.repo)...)
 		}
 	}
 	return
 }
 
-func (m *Manager) down(cores []string, repo Repository) (failed []string) {
+func (m *Manager) down(ctx context.Context, cores []string, repo Repository) (failed []string) {
 	if len(cores) == 0 || repo == nil {
 		return
 	}
-	_, failed = m.client.Download(m.Conf.GetCoresStorePath(), m.getCoreUrls(cores, repo)...)
+	_, failed = m.client.Download(ctx, m.Conf.GetCoresStorePath(), m.getCoreUrls(cores, repo)...)
 	return
 }
 

@@ -28,9 +28,11 @@ func Cage(conf CagedConf, log *logger.Logger) Caged {
 }
 
 func (c *Caged) Init() error {
-	if err := manager.CheckCores(c.conf.Emulator, c.log); err != nil {
-		c.log.Warn().Err(err).Msgf("a Libretro cores sync fail")
-	}
+	go func() {
+		if err := manager.CheckCores(c.conf.Emulator, c.log); err != nil {
+			c.log.Warn().Err(err).Msgf("a Libretro cores sync fail")
+		}
+	}()
 
 	if c.conf.Emulator.FailFast {
 		if err := c.IsSupported(); err != nil {

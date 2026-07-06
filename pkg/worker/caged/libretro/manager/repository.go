@@ -1,7 +1,5 @@
 package manager
 
-import "strings"
-
 type ArchInfo struct {
 	Arch   string
 	Ext    string
@@ -29,16 +27,15 @@ func (r Repo) CoreUrl(_ string, _ ArchInfo) string { return r.Address }
 type Buildbot struct{ Repo }
 
 func (r Buildbot) CoreUrl(file string, info ArchInfo) string {
-	var sb strings.Builder
-	sb.WriteString(r.Address + "/")
+	url := r.Address
 	if info.Vendor != "" {
-		sb.WriteString(info.Vendor + "/")
+		url += "/" + info.Vendor
 	}
-	sb.WriteString(info.Os + "/" + info.Arch + "/latest/" + file + info.Ext)
+	url += "/" + info.Os + "/" + info.Arch + "/latest/" + file + info.Ext
 	if r.Compression != "" {
-		sb.WriteString("." + r.Compression)
+		url += "." + r.Compression
 	}
-	return sb.String()
+	return url
 }
 
 type Github struct{ Buildbot }

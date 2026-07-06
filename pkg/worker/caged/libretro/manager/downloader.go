@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"context"
 	"os"
 
 	"github.com/giongto35/cloud-game/v3/pkg/logger"
@@ -12,8 +13,15 @@ type Download struct {
 	Address string
 }
 
+type Result struct {
+	Key        string
+	Filename   string
+	Err        error
+	StatusCode int
+}
+
 type Client interface {
-	Request(dest string, urls ...Download) ([]string, []string)
+	Request(ctx context.Context, dest string, urls ...Download) <-chan Result
 }
 
 type Downloader struct {
@@ -30,7 +38,7 @@ type Process func(string, []string, *logger.Logger) []string
 
 func NewDefaultDownloader(log *logger.Logger) Downloader {
 	return Downloader{
-		backend: NewGrabDownloader(log),
+		backend: NewFetcher(log),
 		pipe:    []Process{unpackDelete},
 		log:     log,
 	}
@@ -40,11 +48,24 @@ func NewDefaultDownloader(log *logger.Logger) Downloader {
 // put them into the destination folder.
 // It will return a partial or full list of downloaded files,
 // a list of processed files if some pipe processing functions are set.
-func (d *Downloader) Download(dest string, urls ...Download) ([]string, []string) {
-	files, fails := d.backend.Request(dest, urls...)
-	for _, op := range d.pipe {
-		files = op(dest, files, d.log)
+func (d *Downloader) Download(ctx context.Context, dest string, urls ...Download) ([]string, []string) {
+	var files, fails []string
+
+	for r := range d.backend.Request(ctx, dest, urls...) {
+		if r.Err != nil {
+			if r.StatusCode == 404 {
+				fails = append(fails, r.Key)
+			}
+			continue
+		}
+
+		processed := []string{r.Filename}
+		for _, op := range d.pipe {
+			processed = op(dest, processed, d.log)
+		}
+		files = append(files, processed...)
 	}
+
 	return files, fails
 }
 
