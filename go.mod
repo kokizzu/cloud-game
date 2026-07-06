@@ -3,6 +3,7 @@ module github.com/giongto35/cloud-game/v3
 go 1.26
 
 require (
+	github.com/VictoriaMetrics/metrics v1.44.0
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-gst/go-gst v1.4.0
 	github.com/gofrs/flock v0.13.0
@@ -50,6 +51,8 @@ require (
 	github.com/pion/transport/v4 v4.0.2 // indirect
 	github.com/pion/turn/v5 v5.0.12 // indirect
 	github.com/tinylib/msgp v1.6.4 // indirect
+	github.com/valyala/fastrand v1.1.0 // indirect
+	github.com/valyala/histogram v1.2.0 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
