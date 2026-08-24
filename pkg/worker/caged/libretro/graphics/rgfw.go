@@ -539,7 +539,7 @@ func NewRGFWContext(cfg Config) (*RGFW, error) {
 }
 
 func (r *RGFW) Deinit() error {
-	if !r.inited {
+	if r == nil || !r.inited {
 		return nil
 	}
 	r.inited = false
