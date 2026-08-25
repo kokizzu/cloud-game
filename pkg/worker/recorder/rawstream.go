@@ -12,7 +12,7 @@ import (
 
 type rawStream struct {
 	dir string
-	id  uint32
+	id  atomic.Uint32
 	wg  sync.WaitGroup
 }
 
@@ -23,13 +23,13 @@ func newRawStream(dir string) (*rawStream, error) {
 }
 
 func (p *rawStream) Close() error {
-	atomic.StoreUint32(&p.id, 0)
+	p.id.Store(0)
 	p.wg.Wait()
 	return nil
 }
 
 func (p *rawStream) Write(data Video) {
-	i := atomic.AddUint32(&p.id, 1)
+	i := p.id.Add(1)
 	fileName := fmt.Sprintf(videoFile, i, data.Frame.W, data.Frame.H, data.Frame.Stride)
 	p.wg.Add(1)
 	go p.saveFrame(fileName, data.Frame)
