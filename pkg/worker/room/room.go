@@ -219,3 +219,10 @@ type GameSession struct {
 func NewGameSession(id string, s Session) *GameSession {
 	return &GameSession{AppSession: AppSession{uid: SessionKey(id), Session: s}}
 }
+
+// Explicitly forward the embedded Session methods to work around a Go 1.27 linker bug:
+// promoted wrappers mis-link when called from generics.
+func (g GameSession) SendAudio(data []byte, dur time.Duration) { g.Session.SendAudio(data, dur) }
+func (g GameSession) SendVideo(data []byte, dur time.Duration) { g.Session.SendVideo(data, dur) }
+func (g GameSession) SendData(data []byte)                     { g.Session.SendData(data) }
+func (g GameSession) Disconnect()                              { g.Session.Disconnect() }
