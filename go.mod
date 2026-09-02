@@ -6,7 +6,7 @@ require (
 	github.com/VictoriaMetrics/metrics v1.44.0
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-gst/go-gst v1.4.0
-	github.com/gofrs/flock v0.13.0
+	github.com/gofrs/flock v0.13.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/klauspost/cpuid/v2 v2.4.0
 	github.com/knadh/koanf/maps v0.1.3
@@ -15,10 +15,10 @@ require (
 	github.com/pion/ice/v4 v4.4.1
 	github.com/pion/interceptor v0.1.47
 	github.com/pion/logging v0.2.4
-	github.com/pion/webrtc/v4 v4.2.18
+	github.com/pion/webrtc/v4 v4.2.19
 	github.com/rs/xid v1.6.0
 	github.com/rs/zerolog v1.35.1
-	golang.org/x/crypto v0.55.0
+	golang.org/x/crypto v0.56.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -28,7 +28,7 @@ require (
 	github.com/go-gst/go-glib v1.4.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/klauspost/compress v1.19.2 // indirect
+	github.com/klauspost/compress v1.20.0 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
@@ -39,8 +39,8 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pion/datachannel v1.6.2 // indirect
-	github.com/pion/dtls/v3 v3.1.5 // indirect
-	github.com/pion/mdns/v2 v2.1.0 // indirect
+	github.com/pion/dtls/v3 v3.1.8 // indirect
+	github.com/pion/mdns/v2 v2.2.0 // indirect
 	github.com/pion/randutil v0.1.0 // indirect
 	github.com/pion/rtcp v1.2.17 // indirect
 	github.com/pion/rtp v1.10.5 // indirect
