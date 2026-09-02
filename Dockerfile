@@ -1,7 +1,7 @@
 ARG BUILD_PATH=/tmp/cloud-game
 ARG VERSION=master
 
-ARG GO_VERSION=1.26.4
+ARG GO_VERSION=1.27.1
 ARG GSTREAMER_VERSION=1.29.2
 
 # gstreamer minimal build
