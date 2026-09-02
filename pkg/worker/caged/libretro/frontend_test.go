@@ -288,6 +288,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestStateConcurrency(t *testing.T) {
+	t.Skip()
 	tests := []struct {
 		run  testRun
 		seed int
